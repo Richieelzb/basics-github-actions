@@ -1,0 +1,21 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.8
+    commands:
+      - curl -O https://releases.hashicorp.com/terraform/1.13.3/terraform_1.13.3_linux_amd64.zip
+      - unzip terraform_1.13.3_linux_amd64.zip
+      - mv terraform /usr/local/bin/
+  pre_build:
+    commands:
+      - terraform --version
+      - terraform init
+      - terraform validate
+  build:
+    commands:
+     
+      #- terraform plan -lock=false -out=tfplan
+      #- terraform apply -lock=false -auto-approve
+      - terraform destroy -lock=false -auto-approve
