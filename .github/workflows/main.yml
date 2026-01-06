@@ -52,16 +52,15 @@ jobs:
       #  working-directory: ${{ env.TF_WORKING_DIR }}
         run: terraform validate
 
-      # - name: Terraform plan
-      #  # id: tfplan
-      #   #working-directory: ${{ env.TF_WORKING_DIR }}
-      #   env:
-      #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     AWS_REGION: ${{ vars.AWS_REGION }}
-      #   run: |
-      #     terraform plan -input=false -out=tfplan.binary
-      #     terraform show -no-color tfplan.binary > tfplan.txt
+      - name: Terraform plan
+       # id: tfplan
+        #working-directory: ${{ env.TF_WORKING_DIR }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        run: |
+          terraform plan -input=false 
 
       # - name: Upload plan artifact
       #   uses: actions/upload-artifact@v4
@@ -91,7 +90,14 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
-
+      
+      - name: Terraform init
+       # working-directory: ${{ env.TF_WORKING_DIR }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        run: terraform init -input=false
 
       - name: Terraform apply
        # working-directory: ${{ env.TF_WORKING_DIR }}
