@@ -1,22 +1,103 @@
-name: Build WF
+name: Terraform CI/CD
+
 on:
   push:
-    branches: [ "main" ]
-  # pull_request:
-  #   branches: [ "main" ]
+    branches:
+     - main
+  pull_request:
+    branches:
+     - main
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env: 
+  ECR_REPOSITORY: 'lzb-ecr-repo'
+  TF_VERSION: 1.6.6
+
 jobs:
-  Build:
+  terraform-plan:
+    name: Terraform Plan (PRs)
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
     steps:
       - name: Code checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
 
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
-        run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+      
+      - name: Terraform fmt (check)
+       # working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform fmt -check -recursive
+      
+      - name: Terraform init
+       # working-directory: ${{ env.TF_WORKING_DIR }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        run: terraform init -input=false
+
+      - name: Terraform validate
+      #  working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform validate
+
+      # - name: Terraform plan
+      #  # id: tfplan
+      #   #working-directory: ${{ env.TF_WORKING_DIR }}
+      #   env:
+      #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     AWS_REGION: ${{ vars.AWS_REGION }}
+      #   run: |
+      #     terraform plan -input=false -out=tfplan.binary
+      #     terraform show -no-color tfplan.binary > tfplan.txt
+
+      # - name: Upload plan artifact
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: tfplan
+      #     path: ${{ env.TF_WORKING_DIR }}/tfplan.txt
+
+      
+      - name: Notify if Build Fails
+        if: failure()
+        run: echo "build fails"
+
+  terraform-apply:
+    name: Build_And_Publish
+    runs-on: ubuntu-latest
+    environment: development
+    needs: Build
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Code checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Terraform apply
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: terraform apply -input=false -auto-approve
+
+      - name: Run on other branches
+        if: github.ref != 'refs/heads/main'
+        run: echo "Skipping tests and code analysis"
+
+
+     
