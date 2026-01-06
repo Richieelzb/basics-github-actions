@@ -86,6 +86,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
 
       - name: Terraform apply
        # working-directory: ${{ env.TF_WORKING_DIR }}
