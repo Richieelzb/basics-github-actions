@@ -35,9 +35,9 @@ resource "aws_ecs_task_definition" "lzb-project-task" {
 
   container_definitions = jsonencode([
     {
-      name      = local.container_name
-      image     = "654654440523.dkr.ecr.eu-west-1.amazonaws.com/lzb-project-repo:latest"
-                  
+      name  = local.container_name
+      image = "654654440523.dkr.ecr.eu-west-1.amazonaws.com/lzb-project-repo:latest"
+
       essential = true
 
       logConfiguration = {
